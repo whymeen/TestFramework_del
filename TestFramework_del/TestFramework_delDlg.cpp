@@ -37,7 +37,7 @@ CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
 }
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
-{
+{\
 	CDialogEx::DoDataExchange(pDX);
 }
 
@@ -58,12 +58,14 @@ CTestFramework_delDlg::CTestFramework_delDlg(CWnd* pParent /*=NULL*/)
 void CTestFramework_delDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_COMBO_LIST_OBJECT, m_cvCbxObjectList);
 }
 
 BEGIN_MESSAGE_MAP(CTestFramework_delDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_BN_CLICKED(IDC_BUTTON_DEL_OBJECT, &CTestFramework_delDlg::OnBnClickedButtonDelObject)
 END_MESSAGE_MAP()
 
 
@@ -152,3 +154,32 @@ HCURSOR CTestFramework_delDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+
+
+void CTestFramework_delDlg::OnBnClickedButtonDelObject()
+{
+	CString cstmp;
+	m_cvCbxObjectList.GetLBText(m_cvCbxObjectList.GetCurSel(), cstmp);
+
+	int objectID = atoi(cstmp);
+
+	// 객체 정보 네트워크로 전달 [6/15/2010 boxface]
+	//////////////////////////////////////////////////////////////////////////
+	EVENT_OBJECT_CONTROL sendData;
+	memset(&sendData, 0x00, sizeof(EVENT_OBJECT_CONTROL));
+
+	sendData.type = MSG_CODE_EVENT_OBJECT_CONTROL_0x13;
+	sendData.length = sizeof(EVENT_OBJECT_CONTROL);
+
+	sendData.mode = OBJECT_CTRL_DELETE;
+	sendData.objectID = objectID;
+
+	char sendBuf[NETWORK_MAXSIZE];
+	memcpy(&sendBuf, (char*)&sendData, sizeof(EVENT_OBJECT_CONTROL));
+	CMainFrame::getinstance()->SendEventData(sendBuf, sizeof(EVENT_OBJECT_CONTROL));
+
+	// 객체정보 내부 메모리에 전달 [6/15/2010 boxface]
+	//////////////////////////////////////////////////////////////////////////
+	m_pObjectManager.delObject(objectID);
+
+}
